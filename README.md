@@ -4,6 +4,8 @@
 
 本项目是一个**肝细胞癌（HCC）经动脉化疗栓塞（TACE）治疗异质性（HTE）分析系统**，采用机器学习方法预测个体化治疗效果（CATE，条件平均治疗效应）。
 
+- 无代码的shiny在线版本：https://zhangkaimedicalapp.shinyapps.io/hcc-tace-treatment-recommendation/
+
 ### 主要功能
 
 1. **变量重要性排序**：基于 RMST-Qini 指标评估各临床变量对治疗异质性的贡献
