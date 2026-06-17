@@ -1,3 +1,5 @@
+# 中文版说明
+
 # HTE-HCC-TACE 演示代码
 
 ## 项目核心功能介绍
@@ -309,122 +311,6 @@ Rscript 11-prepare_shiny_final_model_app_artifacts.R
 
 ---
 
-## 常见问题排查
-
-### 问题 1：Rscript 命令不可用
-
-**症状**：`Rscript: command not found`
-
-**解决方案**：
-
-1. 确认 R 已正确安装
-2. 将 R 的 bin 目录添加到系统 PATH
-3. Windows：通常位于 `C:\Program Files\R\R-4.x.x\bin\`
-
----
-
-### 问题 2：包安装失败
-
-**症状**：`package 'xxx' is not available`
-
-**解决方案**：
-
-1. 检查网络连接
-2. 尝试使用国内镜像源：
-   ```r
-   options(repos = c(CRAN = "https://mirrors.tuna.tsinghua.edu.cn/CRAN/"))
-   ```
-3. 对于 `survlearners`、`grf` 等 GitHub 包：
-   ```r
-   install.packages("remotes")
-   remotes::install_github("grf-labs/grf")
-   remotes::install_github("grf-labs/survlearners")
-   ```
-
----
-
-### 问题 3：内存不足
-
-**症状**：`cannot allocate vector of size xxx Mb`
-
-**解决方案**：
-
-1. 增加 R 的内存限制：
-   ```r
-   memory.limit(size = 16000)  # Windows
-   ```
-2. 减少样本量（修改 `generate_test_data.R` 中的 n 参数）
-3. 使用 64 位 R
-
----
-
-### 问题 4：here() 路径错误
-
-**症状**：`here()` 返回错误路径
-
-**解决方案**：
-
-1. 确保在项目根目录（包含 `.here` 文件的目录）下运行
-2. 手动设置工作目录：
-   ```r
-   setwd("/path/to/HTE-HCC-TACE_V3/demo")
-   ```
-
----
-
-### 问题 5：Excel 文件读取失败
-
-**症状**：`Error in read.xlsx: xxx`
-
-**解决方案**：
-
-1. 确认文件存在且未损坏
-2. 检查文件是否被其他程序占用
-3. 确认 `openxlsx` 包已正确安装
-
----
-
-### 问题 6：survlearners 函数不存在
-
-**症状**：`Error in surv_fl_grf: could not find function`
-
-**解决方案**：
-
-1. 确认 `survlearners` 包已安装：
-   ```r
-   library(survlearners)
-   ls("package:survlearners")
-   ```
-2. 如果函数不存在，可能需要从 GitHub 安装最新版本
-
----
-
-### 问题 7：随机种子不一致
-
-**症状**：多次运行结果不同
-
-**解决方案**：
-
-1. 确保在脚本开头设置随机种子：
-   ```r
-   set.seed(20260423)
-   ```
-2. 确保使用相同版本的 R 和依赖包
-
----
-
-### 问题 8：输出目录不存在
-
-**症状**：`Error in file: cannot open the connection`
-
-**解决方案**：
-
-1. 手动创建输出目录：
-   ```r
-   dir.create("output", recursive = TRUE)
-   ```
-
----
 
 ## 目录结构说明
 
@@ -462,36 +348,278 @@ demo/
 - **数据完全隔离**：`test_data/` 包含独立生成的模拟数据，不覆盖原项目数据
 - **输出完全隔离**：所有结果输出到 `demo/output/`，不影响原项目
 
----
 
-## 快速开始
 
-```bash
-# 1. 进入演示目录
-cd /path/to/HTE-HCC-TACE_V3/demo
+# HTE-HCC-TACE Demo Code
+## Project Core Function Overview
+This project is a **Hepatocellular Carcinoma (HCC) Transarterial Chemoembolization (TACE) Treatment Heterogeneity (HTE) Analysis System**, which employs machine learning to predict individualized treatment effects (CATE, Conditional Average Treatment Effect).
 
-# 2. 生成测试数据
-Rscript generate_test_data.R
+- No-code Shiny online version: https://zhangkaimedicalapp.shinyapps.io/hcc-tace-treatment-recommendation/
 
-# 3. 运行变量重要性排序（最核心的步骤）
-cd code
-Rscript 2-rmst24_qini_rank_by_variable_train.R
+### Key Functions
+1. **Variable Importance Ranking**: Evaluate the contribution of each clinical variable to treatment heterogeneity based on the RMST-Qini metric
+2. **Multi-Algorithm Recursive Feature Augmentation**: Perform feature selection using multiple algorithms from the `survlearners` package (Lasso, GRF, CoxPH, etc.)
+3. **Final Model Training & Prediction**: Train the final model with `surv_fl_grf` (Causal Survival Forest) to generate patient-level CATE predictions
+4. **Decile HR Validation**: Stratify patients by CATE values to validate heterogeneity of treatment effects
+5. **Model Interpretation**: Provide global and local explanations via DALEX, SHAP and other methodologies
 
-# 4. 查看结果
-cat output/2-rmst24_qini_rank_by_variable_train/06_rmst24_qini_by_variable_ranked_train.csv
+### Analysis Workflow
+```mermaid
+flowchart TD
+    s1["Step 1: Define Base Functions"]
+    s2["Step 2: Rank Variables by Importance"]
+    s3["Step 3: Recursive Feature Augmentation"]
+    s4["Step 4: PS-Weighted HR Functions"]
+    s5["Step 5: Tertile OW-HR Analysis"]
+    s6["Step 6: HR Trend Screening"]
+    s7["Step 7: Final Model Prediction (Top12 Features)"]
+    s8["Step 8: Decile HR Forest Plot"]
+    s9["Step 9: Final Model Prediction (Top24 Features)"]
+    s10["Step 10: Model Interpretation"]
+    s11["Step 11: Shiny App Preparation"]
+
+    s1 --> s2
+    s2 --> s3
+    s3 --> s5
+    s5 --> s6
+    s2 --> s7
+    s7 --> s8
+    s2 --> s9
+    s7 --> s10
+    s7 --> s11
 ```
 
 ---
 
-## 联系方式
+## Demo Environment Deployment Requirements
+### System Requirements
+- **Operating System**: Windows 10/11, macOS 10.15+, Linux (Ubuntu 18.04+)
+- **R Version**: R 4.1.0 or higher (R 4.3.0+ recommended)
+- **RAM**: Minimum 8GB (16GB recommended)
+- **Disk Space**: At least 2GB free storage
 
-如有问题或建议，请通过以下方式联系：
+### R Package Dependencies
+All required R packages listed below, sorted by installation priority:
 
-- 项目仓库：[GitHub 链接]
-- 邮箱：[联系邮箱]
+**Core Utility Packages**:
+- `pacman`: Package manager
+- `tidyverse`: Integrated data processing suite
+- `openxlsx`: Read/write Excel files
+- `here`: Project path management
+
+**Statistical Modeling Packages**:
+- `grf`: Generalized Random Forest (for propensity score estimation & causal forest)
+- `survlearners`: Survival learning library (core CATE algorithm toolkit)
+- `survival`: Foundation package for survival analysis
+
+**Machine Learning & Model Interpretation Packages**:
+- `DALEX`: Unified model explanation framework
+- `ingredients`: Supporting components for model interpretation
+- `kernelshap`: Efficient SHAP value computation
+- `shapviz`: SHAP visualization toolkit
+- `glmnet`: Regularized regression
+- `xgboost`: Gradient boosting decision trees
+- `ranger`: Fast random forest implementation
+- `e1071`: Support vector machine & miscellaneous ML utilities
 
 ---
 
-## 许可证
+## Full Step-by-Step Guide: From Dependency Installation to Demo Launch
+### Step 1: Install R and RStudio
+1. Download and install base R: https://cran.r-project.org/
+2. Download and install RStudio (optional IDE): https://posit.co/downloads/
 
-本演示代码遵循 [MIT License](LICENSE) 开源协议。
+### Step 2: Verify R Installation
+Open your terminal (PowerShell / Terminal) and run:
+```bash
+Rscript --version
+```
+A valid installation will output your R version, e.g. `R scripting front-end version 4.3.x`
+
+### Step 3: Install Dependent R Packages
+Execute the following code in your R or RStudio console:
+```r
+# Install pacman package manager first
+install.packages("pacman")
+
+# Bulk install all required packages via pacman
+pacman::p_load(
+  tidyverse,
+  openxlsx,
+  here,
+  grf,
+  survival,
+  DALEX,
+  ingredients,
+  kernelshap,
+  shapviz,
+  glmnet,
+  xgboost,
+  ranger,
+  e1071
+)
+```
+
+### Step 4: Navigate to Demo Directory
+```bash
+cd /path/to/HTE-HCC-TACE_V3/demo
+```
+
+### Step 5: Generate Synthetic Test Dataset
+```bash
+Rscript generate_test_data.R
+```
+This script outputs the following files:
+- `test_data/01_ISMIO2501_train_tidy.xlsx` (Training set, 300 samples)
+- `test_data/02_ISMIO2501_validation_tidy.xlsx` (Validation set, 200 samples)
+- `test_data/03_ISMIO2501prevalidation_tidy.xlsx` (Pre-validation set, 150 samples)
+- `test_data/PS_variable_definitions.txt` (Propensity score variable dictionary)
+
+### Step 6: Run Demo Entry Script (Optional)
+```bash
+Rscript demo_run.R
+```
+This script validates your runtime environment and prints usage instructions.
+
+---
+
+## Module-by-Module Demo Operation Guide
+### Module 1: Variable Importance Ranking (Step 2)
+**Function**: Calculate RMST-Qini metrics for each predictor to quantify its impact on treatment heterogeneity
+**Run Command**:
+```bash
+cd code
+Rscript 2-rmst24_qini_rank_by_variable_train.R
+```
+**Output Files**:
+- `output/2-rmst24_qini_rank_by_variable_train/06_rmst24_qini_by_variable_ranked_train.csv`
+**Runtime**: ~5–15 minutes (varies with sample size and predictor count)
+
+---
+
+### Module 2: Recursive Feature Augmentation (Step 3)
+**Function**: Iteratively add predictors ordered by importance, and fit CATE models with multiple survival learning algorithms
+**Run Command**:
+```bash
+Rscript 3-survlearners_recursive_feature_growth.R
+```
+**Output Files**:
+- `output/3-survlearners_recursive_feature_growth/07_survlearners_recursive_feature_growth_all_algorithms.csv`
+- `output/3-survlearners_recursive_feature_growth/08_survlearners_recursive_feature_growth_all_algorithms_patient_cate.csv`
+**Runtime**: ~30–60 minutes (varies with algorithm count and feature pool size)
+
+---
+
+### Module 3: Tertile OW-HR Analysis (Step 5)
+**Function**: Stratify patients into 3 equal CATE subgroups, and compute OW-weighted Cox hazard ratios within each stratum
+**Run Command**:
+```bash
+Rscript 5-survlearners_tertile_ow_neglogp_sum.R
+```
+**Output Files**:
+- `output/5-survlearners_tertile_ow_neglogp_sum/06_survlearners_tertile_ow_hr_p_results.csv`
+
+---
+
+### Module 4: HR Trend Screening (Step 6)
+**Function**: Filter optimal algorithm & feature combinations by predefined hazard ratio monotonicity criteria
+**Run Command**:
+```bash
+Rscript 6-hr_trend_screening.R
+```
+**Output Files**:
+- `output/6-hr_trend_screening/04_hr_trend_top_candidates.csv`
+
+---
+
+### Module 5: Final Model Prediction — Top12 Features (Step 7)
+**Function**: Train final causal survival forest model on the top 12 most predictive variables, generate CATE predictions across all three datasets
+**Run Command**:
+```bash
+Rscript 7-final_surv_fl_grf_top12_predict.R
+```
+**Output Files**:
+- `output/7-final_surv_fl_grf_top12_predict/06_train_with_cate.xlsx`
+- `output/7-final_surv_fl_grf_top12_predict/07_validation_with_cate.xlsx`
+- `output/7-final_surv_fl_grf_top12_predict/08_prevalidation_with_cate.xlsx`
+**Runtime**: ~10–20 minutes
+
+---
+
+### Module 6: CATE Decile HR Forest Plot (Step 8)
+**Function**: Split patients into 10 CATE quantiles, generate forest plots comparing crude, OW-weighted, and IPW-adjusted hazard ratios
+**Run Command**:
+```bash
+Rscript 8-cate_decile_hr_forest.R
+```
+**Output Files**:
+- `output/8-cate_decile_hr_forest/09_train_cate_decile_hr_forest.png`
+- `output/8-cate_decile_hr_forest/10_validation_cate_decile_hr_forest.png`
+
+---
+
+### Module 7: Final Model Prediction — Top24 Features (Step 9)
+**Function**: Train causal survival forest model using the top 24 ranked predictors
+**Run Command**:
+```bash
+Rscript 9-surv_fl_grf_top24_train_and_decile.R
+```
+
+---
+
+### Module 8: Model Interpretation (Step 10)
+**Function**: Generate surrogate explanation models and compute SHAP values to interpret the final CATE estimator
+**Run Command**:
+```bash
+Rscript 10-cate_surrogate_models_explain.R
+```
+**Output Files**:
+- SHAP summary plots, partial dependence plots, and variable importance charts stored under `output/explain/`
+**Runtime**: ~20–40 minutes
+
+---
+
+### Module 9: Shiny Web Application Preparation (Step 11)
+**Function**: Export serialized model artifacts required for deployment of the interactive Shiny web app
+**Run Command**:
+```bash
+Rscript 11-prepare_shiny_final_model_app_artifacts.R
+```
+**Output Files**:
+- `output/shiny_final_model_app/final_model_shiny_artifact.rds`
+
+---
+
+## Directory Structure Overview
+```
+demo/
+├── README.md                          # This documentation file
+├── generate_test_data.R               # Synthetic dataset generation script
+├── demo_run.R                         # Main demo entry validation script
+├── code/                              # Full unmodified source code archive
+│   ├── 1-rmst_hte_qini_fun.R         # Base metric & utility function definitions
+│   ├── 2-rmst24_qini_rank_by_variable_train.R
+│   ├── 3-survlearners_recursive_feature_growth.R
+│   ├── 4-ps_weighted_hr_function.R
+│   ├── 5-survlearners_tertile_ow_neglogp_sum.R
+│   ├── 6-hr_trend_screening.R
+│   ├── 7-final_surv_fl_grf_top12_predict.R
+│   ├── 8-cate_decile_hr_forest.R
+│   ├── 9-surv_fl_grf_top24_train_and_decile.R
+│   ├── 10-cate_surrogate_models_explain.R
+│   ├── 11-prepare_shiny_final_model_app_artifacts.R
+│   └── analysis_pipeline_and_dalex_interpretation_plan.md
+├── test_data/                         # Synthetic isolated test datasets
+│   ├── 01_ISMIO2501_train_tidy.xlsx
+│   ├── 02_ISMIO2501_validation_tidy.xlsx
+│   ├── 03_ISMIO2501prevalidation_tidy.xlsx
+│   └── PS_variable_definitions.txt
+└── output/                            # Auto-generated results directory (created after execution)
+```
+
+---
+
+## Relationship to the Original Research Project
+- **Full Code Replication**: The `code/` folder contains unaltered original source code from the parent research project
+- **Data Isolation**: All synthetic test data resides in `test_data/` and will not overwrite original clinical datasets
+- **Output Isolation**: All analytical outputs are saved exclusively to `demo/output/`, with zero risk of modifying parent project files
